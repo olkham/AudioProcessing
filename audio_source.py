@@ -219,11 +219,12 @@ class AudioSource():
             return self.norm(self.buffer)
         return self.buffer
 
-    def get_spectrum(self, n_mels=256, fft_size=4096, normalise=True):
+    def get_spectrum(self, n_mels=256, fft_size=4096, normalise=True, fmin=0, fmax=None):
         S = librosa.feature.melspectrogram(y=self.get_latest_samples(normalise=normalise),
                                         sr=self.SAMPLE_RATE, 
                                         n_mels=n_mels, 
-                                        fmax=self.SAMPLE_RATE/8,
+                                        fmin=fmin,
+                                        fmax=fmax,
                                         n_fft=fft_size)
 
             # convert the slices to amplitude
@@ -238,14 +239,16 @@ def example():
     audio_source = AudioSource()
     audio_source.list_available_devices()
 
-    audio_source.set_sample_duration(1)
-    audio_source.set_sample_step(0.1)
-    audio_source.open(1)
+    audio_source.set_sample_duration(0.5)
+    audio_source.set_buffer_length(10)
+    # audio_source.set_sample_step(0.1)
+    audio_source.open(5)
 
+    cv2.namedWindow("Result",0)
     key = ''
     while key != ord('q'):
         #y = audio_source.get_latest_samples(normalise=True)
-        image_gr = audio_source.get_spectrum()
+        image_gr = audio_source.get_spectrum(normalise=False)
         image_gr = cv2.flip(image_gr, 0)
         image = cv2.applyColorMap(image_gr, 20)
         cv2.imshow("Result", image)
