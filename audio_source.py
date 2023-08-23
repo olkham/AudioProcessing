@@ -52,7 +52,6 @@ class AudioSource():
     def set_buffer_length(self, samples):
         self.BUFFER_LENGTH = samples
 
-
     def set_sample_step(self, step):
         self.STEP = step
 
@@ -114,7 +113,7 @@ class AudioSource():
         if self.signal_source == self.Source.Microphone:
             while self.running:
                 input_data = self.stream.read(self.SAMPLE_SIZE, exception_on_overflow = False)
-                self.data = np.frombuffer(input_data, np.int16) / 32768
+                self.data = np.frombuffer(input_data, np.int16) / (2**16)
 
 
                 if self.BUFFER_LENGTH > 1:
@@ -227,32 +226,39 @@ class AudioSource():
                                         fmax=fmax,
                                         n_fft=fft_size)
 
-            # convert the slices to amplitude
+        # convert the slices to amplitude
         Xdb = librosa.amplitude_to_db(S, ref=np.max, top_db=80.0)
 
         # convert image to colormap
         image_gr = np.interp(Xdb, [-80, 0], [0, 255]).astype('uint8')
         return image_gr
 
+
 def example():
     import cv2
     audio_source = AudioSource()
     audio_source.list_available_devices()
 
-    audio_source.set_sample_duration(0.5)
-    audio_source.set_buffer_length(10)
+    audio_source.set_sample_duration(0.01)
+    audio_source.set_buffer_length(100)
     # audio_source.set_sample_step(0.1)
     audio_source.open(5)
 
     cv2.namedWindow("Result",0)
     key = ''
-    while key != ord('q'):
-        #y = audio_source.get_latest_samples(normalise=True)
-        image_gr = audio_source.get_spectrum(normalise=False)
+    while True:
+        # y = audio_source.get_latest_samples(normalise=True)
+        # print(len(y))
+
+        image_gr = audio_source.get_spectrum(normalise=True)
         image_gr = cv2.flip(image_gr, 0)
         image = cv2.applyColorMap(image_gr, 20)
         cv2.imshow("Result", image)
         key = cv2.waitKey(1)
+
+        if key == ord('q') or key == 27:
+            break
+
 
 if __name__ == '__main__':
     example()
